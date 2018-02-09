@@ -1,13 +1,21 @@
 
-words = {
-    "high": "they climbed a very high mountain",
-    "green": "the grass outside is green"
-};
+words = {};
+
+d3.csv("words.csv").then(function(data) {
+    for (var i = 0; i < data.length; i++) {
+        if (data[i].sentence.length > 1) {
+            words[data[i].word] = data[i].sentence;
+        }
+    }
+});
 
 function speak(str) {
-    
     var msg = new SpeechSynthesisUtterance(str);
-    
+
+    // Use the online language synthesis engine.
+    msg.voice = speechSynthesis.getVoices().filter(function(voice) { return voice.name == 'Google US English'; })[0];
+    msg.rate = 0.8;
+ 
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(msg);
 }
@@ -33,11 +41,19 @@ function GameCntl($scope, $timeout) {
     $scope.resetGuess = function() {
         $scope.guess = '';
 
+        $scope.hint = words[$scope.word].replace($scope.word, '_____');
+
+        var searchMask = $scope.word;
+        var regEx = new RegExp(searchMask, "ig");
+        var replaceMask = '_____';
+
+        $scope.hint = words[$scope.word].replace(regEx, replaceMask);
+
         $scope.timeout = 0;
         $scope.right_indicator = false;
         $scope.wrong_indicator = false;
         
-        speak($scope.word + ',, ' + words[$scope.word]);
+        speak($scope.word + '. ' + words[$scope.word]);
     };
     
     $scope.keyup = function(e) {
@@ -46,26 +62,31 @@ function GameCntl($scope, $timeout) {
             return;
         }
 
+        console.log(e.keyCode);
+
         if (e.keyCode == 8) {
             // Remove the last character.
             $scope.guess = $scope.guess.slice(0, -1);
             return;
         } else if (e.keyCode == 32) {
             $scope.next();
+        } else if (e.keyCode == 13) {
+            $scope.resetGuess();
+        } else if (e.keyCode == 222) {
+            $scope.guess += '\'';
+        } else {
+            c = String.fromCharCode(e.keyCode);
+
+            if (c >= 'A' && c <= 'Z') {
+                $scope.guess += c.toLowerCase();
+            }
         }
         
-        c = String.fromCharCode(e.keyCode);
         
-        // Ignore key presses outside of A-Z
-        if(c < 'A' || c > 'Z') {
-            return;
-        }
-
-        $scope.guess += c.toLowerCase();
-
         if($scope.guess == $scope.word) {
             $scope.correct();
         }
+        
     };
     
     $scope.correct = function() {
