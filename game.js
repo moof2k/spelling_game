@@ -1,95 +1,8 @@
-// ls | perl -pi -e 's/^(.*)\.jpg/"$1",/g'
 
-words = [
-         "acorn",
-         "apple",
-         "backpack",
-         "ball",
-         "barn",
-         "basket",
-         "basketball",
-         "bear",
-         "bed",
-         "bee",
-         "black",
-         "blue",
-         "boat",
-         "book",
-         "brown",
-         "bus",
-         "cake",
-         "california",
-         "camera",
-         "candy",
-         "car",
-         "cat",
-         "chair",
-         "cloud",
-         "cow",
-         "dog",
-         "doll",
-         "donkey",
-         "duck",
-         "elephant",
-         "extinguisher",
-         "fire",
-         "firefighter",
-         "fish",
-         "four",
-         "fox",
-         "giraffe",
-         "globe",
-         "goat",
-         "green",
-         "hat",
-         "horse",
-         "hose",
-         "house",
-         "hydrant",
-         "ladder",
-         "leaf",
-         "leaves",
-         "markers",
-         "monkey",
-         "moose",
-         "one",
-         "orange",
-         "orchard",
-         "oregon",
-         "panda",
-         "people",
-         "pie",
-         "pig",
-         "pink",
-         "plane",
-         "pumpkin",
-         "purple",
-         "rain",
-         "rake",
-         "red",
-         "road",
-         "rollercoaster",
-         "room",
-         "ruler",
-         "saw",
-         "scarecrow",
-         "school",
-         "seed",
-         "shell",
-         "snow",
-         "soccerball",
-         "stars",
-         "sun",
-         "taxi",
-         "teacher",
-         "three",
-         "train",
-         "tree",
-         "truck",
-         "two",
-         "white",
-         "yellow"
-];
+words = {
+    "high": "they climbed a very high mountain",
+    "green": "the grass outside is green"
+};
 
 function speak(str) {
     
@@ -101,55 +14,44 @@ function speak(str) {
 
 
 function GameCntl($scope, $timeout) {
-    $scope.clue = "_ar";
-    $scope.word = "car";
-    $scope.letter = "c";
-    $scope.index = 0;
+    
     $scope.right_indicator = false;
     $scope.wrong_indicator = false;
     $scope.number_right = 0;
     $scope.timeout = 0;
-    $scope.mode = "any";
-    
-    $scope.setmode = function(m) {
-        $scope.mode = m;
-        $scope.next();
-    }
-    
+ 
     $scope.next = function() {
-        
         $scope.timeout = 0;
-        
+
         // Pick a random word
-        $scope.word = words[Math.floor(Math.random()*words.length)];
+        var num_words = Object.keys(words).length;
+        $scope.word = Object.keys(words)[Math.floor(Math.random() * num_words)];
         
-        // Select a letter
-        if($scope.mode == "any") {
-            $scope.index = Math.floor(Math.random()*$scope.word.length);
-        } else {
-            $scope.index = 0;
-        }
-        
-        $scope.letter = $scope.word[$scope.index];
-        
-        $scope.resetclue();
+        $scope.resetGuess();
     };
     
-    $scope.resetclue = function() {
+    $scope.resetGuess = function() {
+        $scope.guess = '';
+
         $scope.timeout = 0;
         $scope.right_indicator = false;
         $scope.wrong_indicator = false;
         
-        $scope.clue = $scope.word.substr(0, $scope.index) + '_'
-        + $scope.word.substr($scope.index + 1);
-        
-        speak($scope.word);
+        speak($scope.word + ',, ' + words[$scope.word]);
     };
     
     $scope.keyup = function(e) {
         // If they already got it right, ignore input
         if($scope.right_indicator) {
             return;
+        }
+
+        if (e.keyCode == 8) {
+            // Remove the last character.
+            $scope.guess = $scope.guess.slice(0, -1);
+            return;
+        } else if (e.keyCode == 32) {
+            $scope.next();
         }
         
         c = String.fromCharCode(e.keyCode);
@@ -158,13 +60,11 @@ function GameCntl($scope, $timeout) {
         if(c < 'A' || c > 'Z') {
             return;
         }
-        
-        if(c == $scope.letter.toUpperCase()) {
+
+        $scope.guess += c.toLowerCase();
+
+        if($scope.guess == $scope.word) {
             $scope.correct();
-        } else if(c == ' ') {
-            $scope.next();
-        } else {
-            $scope.incorrect(c);
         }
     };
     
@@ -174,9 +74,6 @@ function GameCntl($scope, $timeout) {
         
         $scope.right_indicator = true;
         $scope.wrong_indicator = false;
-        
-        $scope.clue = $scope.word.substr(0, $scope.index) + $scope.letter
-        + $scope.word.substr($scope.index + 1);
         
         if($scope.timeout != 0) {
             $timeout.cancel($scope.timeout);
@@ -189,9 +86,6 @@ function GameCntl($scope, $timeout) {
     $scope.incorrect = function(c) {
         $scope.right_indicator = false;
         $scope.wrong_indicator = true;
-        
-        $scope.clue = $scope.word.substr(0, $scope.index) + c.toLowerCase()
-        + $scope.word.substr($scope.index + 1);
         
         if($scope.timeout != 0) {
             $timeout.cancel($scope.timeout);
