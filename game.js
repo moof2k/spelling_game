@@ -1,13 +1,5 @@
 
-words = {};
 
-d3.csv("words.csv").then(function(data) {
-    for (var i = 0; i < data.length; i++) {
-        if (data[i].sentence.length > 1) {
-            words[data[i].word] = data[i].sentence;
-        }
-    }
-});
 
 function speak(str) {
     var msg = new SpeechSynthesisUtterance(str);
@@ -22,18 +14,31 @@ function speak(str) {
 
 
 function GameCntl($scope, $timeout) {
-    
+    $scope.guess = '';
+    $scope.hint = '';
     $scope.right_indicator = false;
     $scope.wrong_indicator = false;
     $scope.number_right = 0;
     $scope.timeout = 0;
+
+    $scope.words = {};
+
+    d3.csv("words.csv").then(function(data) {
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].sentence.length > 1) {
+                $scope.words[data[i].word] = data[i].sentence;
+            }
+        }
+
+        $scope.next();
+    });
  
     $scope.next = function() {
         $scope.timeout = 0;
 
         // Pick a random word
-        var num_words = Object.keys(words).length;
-        $scope.word = Object.keys(words)[Math.floor(Math.random() * num_words)];
+        var num_words = Object.keys($scope.words).length;
+        $scope.word = Object.keys($scope.words)[Math.floor(Math.random() * num_words)];
         
         $scope.resetGuess();
     };
@@ -41,19 +46,19 @@ function GameCntl($scope, $timeout) {
     $scope.resetGuess = function() {
         $scope.guess = '';
 
-        $scope.hint = words[$scope.word].replace($scope.word, '_____');
+        $scope.hint = $scope.words[$scope.word].replace($scope.word, '_____');
 
         var searchMask = $scope.word;
         var regEx = new RegExp(searchMask, "ig");
         var replaceMask = '_____';
 
-        $scope.hint = words[$scope.word].replace(regEx, replaceMask);
+        $scope.hint = $scope.words[$scope.word].replace(regEx, replaceMask);
 
         $scope.timeout = 0;
         $scope.right_indicator = false;
         $scope.wrong_indicator = false;
         
-        speak($scope.word + '. ' + words[$scope.word]);
+        speak($scope.word + '. ' + $scope.words[$scope.word]);
     };
     
     $scope.keyup = function(e) {
@@ -116,5 +121,4 @@ function GameCntl($scope, $timeout) {
         speak($scope.clue + "?");
     };
     
-    $scope.next();
 }
