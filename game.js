@@ -74,7 +74,7 @@ function GameCntl($scope, $timeout) {
             $scope.guess = $scope.guess.slice(0, -1);
             return;
         } else if (e.keyCode == 32) {
-            $scope.next();
+            //$scope.next();
         } else if (e.keyCode == 13) {
             $scope.resetGuess();
         } else if (e.keyCode == 222) {
